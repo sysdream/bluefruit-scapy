@@ -30,7 +30,7 @@ class LEMACField(Field):
     def m2i(self, pkt, x):
         return str2mac(x[::-1])
     def any2i(self, pkt, x):
-        if type(x) is str and len(x) is 6:
+        if isinstance(x,str) and len(x) == 6:
             x = self.m2i(pkt, x)
         return x
     def i2repr(self, pkt, x):
@@ -49,10 +49,12 @@ class NordicBLE(Packet):
     name="Nordic BLE"
     fields_desc = [
             XByteField('board_id',-1),
+            ByteField('header_len', -1),
+            ByteField('paylod_len', -1),
             ByteField('proto_version', -1),
             LEShortField('pkt_counter', -1),
-            LEShortField('id', -1),
-            ShortField('ble_len',-1),
+            ByteField('id', -1),
+            ByteField('ble_len',-1),
             XByteField('flags', 0),
             ByteField('channel', 0),
             ByteField('rssi', 0),
@@ -92,8 +94,7 @@ class BLE_LL_Data(Packet):
         BitField('seqn', 0, 1),
         BitField('next_seqn', 0, 1),
         BitField('llid', 0, 2),
-        BitField('rfu2', 0, 3),
-        BitField('length', 0, 5),
+        BitField('length', 0, 8),
     ]
     def post_dissect(self, s):
         return s[:-3]
@@ -201,7 +202,7 @@ if not hasattr(scapy.layers.bluetooth, 'ATT_Hdr'):
 # Nordic BLE layer binding
 ############################
 
-bind_layers( NordicBLE, BLE_LL,)
+bind_layers( NordicBLE, BLE_LL)
 
 ############################
 # BLE/ATT layer bindings
@@ -229,5 +230,5 @@ bind_layers( ATT_Hdr,       ATT_Write_Response, opcode=0x13)
 bind_layers( ATT_Hdr,       ATT_Write_Command, opcode=0x52)
 bind_layers( ATT_Hdr,       ATT_Handle_Value_Notification, opcode=0x1b)
 
-# Bluefriend sniffer uses DLT id 157 for Nordic BLE packets
-conf.l2types.register(157, NordicBLE)
+# Bluefriend sniffer uses DLT id 272 for Nordic BLE packets
+conf.l2types.register(272, NordicBLE)
